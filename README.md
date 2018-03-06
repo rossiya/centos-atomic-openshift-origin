@@ -1,0 +1,1 @@
+# centos-atomic-openshift-origin
