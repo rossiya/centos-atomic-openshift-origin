@@ -17,9 +17,8 @@
       with_items:
         - { name: manager, ip: 192.168.56.201 }
         - { name: master, ip: 192.168.56.202 }
-        - { name: infra, ip: 192.168.56.203 }
-        - { name: router, ip: 192.168.56.204 }
-        - { name: node, ip: 192.168.56.205 }
+        - { name: node-a, ip: 192.168.56.203 }
+        - { name: node-b, ip: 192.168.56.204 }
     - name: Enabling Updates to CA Certs
       shell: update-ca-trust enable
     - name: add CA certificate
