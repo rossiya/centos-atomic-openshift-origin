@@ -1,0 +1,90 @@
+---
+- hosts: all
+  become: yes
+  user: root
+  tasks:
+    - name: Update ssh_config to disable strict host checking
+      lineinfile:
+        path: /etc/ssh/ssh_config
+        regexp: '^#\s+StrictHostKeyChecking ask$'
+        line: 'StrictHostKeyChecking no'
+        state: present
+    - name: Add /root/.ssh directory
+      file: 
+        path: /root/.ssh
+        owner: root
+        state: directory    
+    - name: Add root pub key
+      copy:
+       owner: root
+       src: ./id_rsa.pub
+       dest: /root/.ssh/id_rsa.pub
+    - name: Add root priv key
+      copy:
+       owner: root
+       src: ./id_rsa
+       dest: /root/.ssh/id_rsa
+       mode: 0600
+    - name: Add host file entries
+      blockinfile:
+        path: /etc/hosts
+        block: |
+          {{ item.ip }} {{ item.name }}
+        marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
+      with_items:
+        - { name: manager, ip: 192.168.56.201 }
+        - { name: master, ip: 192.168.56.202 }
+        - { name: infra, ip: 192.168.56.203 }
+        - { name: router, ip: 192.168.56.204 }
+        - { name: node, ip: 192.168.56.205 }
+    - name: Enabling Updates to CA Certs
+      shell: update-ca-trust enable
+    - name: add CA certificate
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "{{item.mode}}"
+        owner: root
+        group: root
+      with_items:
+        - { src: '../cacerts/corp.crt',dest: '/etc/pki/ca-trust/source/anchors/corp.crt', mode: '0644'}
+        - { src: '../cacerts/corp.crt',dest: '/etc/pki/tls/certs/corp.crt', mode: '0644'}
+    - name: Applying CA Certs
+      shell: update-ca-trust extract
+    - name: Install helper packages
+      shell: atomic host install wget git net-tools bind-utils iptables-services bridge-utils bash-completion kexec-tools sos ansible pyOpenSSL
+      ignore_errors: true
+    - name: restart server
+      shell: sleep 2 && systemctl reboot
+      async: 1
+      poll: 0
+      become: yes
+      become_method: sudo
+      ignore_errors: true
+    - name: Pause for the cause
+      pause: seconds=20
+    - name: waiting for server to come back after reboot
+      wait_for_connection:
+    - name: uptime report
+      command: uptime
+      register: uptime
+    - debug: var=uptime.stdout_lines
+    - name: git clone https://github.com/openshift/openshift-ansible.git
+      shell: git clone -b release-3.9 https://github.com/openshift/openshift-ansible.git ~/ansible/openshift-ansible
+    - name: Add /etc/ansible/hosts
+      copy:
+       owner: root
+       src: ./etc_ansible_hosts
+       dest: /etc/ansible/hosts
+    - name: Enable Pipelining in Ansible
+      lineinfile:
+       path: /etc/ansible/ansible.cfg
+       regexp: '^#pipelining = False'
+       line: 'pipelining = True'
+       state: present
+    - name: Enable ControlPersist in Ansible
+      lineinfile:
+       path: /etc/ansible/ansible.cfg
+       regexp: '^#ssh_args = -C -o ControlMaster=auto -o ControlPersist=60s'
+       line: 'ssh_args = -C -o ControlMaster=auto -o ControlPersist=60s'
+       state: present

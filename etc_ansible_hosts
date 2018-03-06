@@ -1,0 +1,37 @@
+[OSEv3:children]
+masters
+nodes
+etcd
+
+[OSEv3:vars]
+ansible_ssh_user=root
+openshift_master_default_subdomain=master
+openshift_master_cluster_hostname=master
+openshift_master_cluster_public_hostname=master
+openshift_deployment_type=origin
+openshift_disable_check=memory_availability,disk_availability,docker_storage
+containerized=true
+openshift_release=3.9
+openshift_version=3.9.0
+openshift_hosted_manage_registry=true
+openshift_hosted_registry_selector='region=infra'
+openshift_hosted_router_selector='region=router'
+openshift_override_hostname_check=true
+openshift_docker_insecure_registries=172.30.0.0/16
+openshift_clock_enabled=true
+debug_level=4
+
+# host group for masters
+[masters]
+master openshift_ip=192.168.56.202 openshift_public_ip=192.168.56.202 openshift_public_hostname=master
+
+[etcd]
+master
+
+# host group for nodes, includes region info
+[nodes]
+master openshift_ip=192.168.56.202 openshift_public_ip=192.168.56.202 openshift_public_hostname=master
+infra openshift_ip=192.168.56.203 openshift_public_ip=192.168.56.203 openshift_public_hostname=infra openshift_node_labels="{'region': 'infra'}" 
+router openshift_ip=192.168.56.204 openshift_public_ip=192.168.56.204 openshift_public_hostname=router openshift_node_labels="{'region': 'router'}"
+node openshift_ip=192.168.56.205 openshift_public_ip=192.168.56.205 openshift_public_hostname=node openshift_node_labels="{'region': 'primary'}"
+

@@ -1,0 +1,49 @@
+---
+- hosts: all
+  become: yes
+  user: root
+  tasks:
+  - name: Update ssh_config to disble strict host checking
+    lineinfile:
+      path: /etc/ssh/ssh_config
+      regexp: '^#\s+StrictHostKeyChecking ask$'
+      line: 'StrictHostKeyChecking no'
+      state: present
+  - name: Add /root/.ssh directory
+    file:
+      path: /root/.ssh
+      owner: root
+      state: directory
+  - name: Add root pub key
+    copy:
+      owner: root
+      src: ./id_rsa.pub
+      dest: /root/.ssh/id_rsa.pub
+  - name: Add root priv key
+    copy:
+     owner: root
+     src: ./id_rsa
+     dest: /root/.ssh/id_rsa
+     mode: 0600
+  - name: Add host file entries
+    blockinfile:
+      path: /etc/hosts
+      block: |
+        {{ item.ip }} {{ item.name }}
+      marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
+    with_items:
+      - { name: manager, ip: 192.168.56.201 }
+      - { name: master, ip: 192.168.56.202 }
+      - { name: infra, ip: 192.168.56.203 }
+      - { name: router, ip: 192.168.56.204 }
+      - { name: node, ip: 192.168.56.205 }
+      - { name: lb, ip: 192.168.56.206 }
+  - name: install centos-release-openshift-origin package
+    yum:
+      name: centos-release-openshift-origin 
+      state: present
+  - name: install origin tools package
+    yum:
+      name: origin-clients
+      state: present
+
