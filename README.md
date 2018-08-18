@@ -4,13 +4,16 @@ Should provide a starting point to create an Openshift Origin cluster on Centos 
 
 ## Prerequisites
 
-- Get the latest Centos Atomic Vagrant image from cloud.centos.org (https://cloud.centos.org/centos/7/vagrant/x86_64/images/)
+- Get the latest Centos Atomic Vagrant image from cloud.centos.org (https://cloud.centos.org/centos/7/atomic/images/)
   - Import the image into vagrant
   ```
   vagrant box add --name centos_atomic_7 CentOS-7-x86_64-Vagrant-1801_02.VirtualBox.box
   ```
 - Generate SSH keys for your vagrant environment
   - place these files as 'id_rsa' and 'id_rsa.pub' in the working directory
+  ```
+  ssh-keygen -f ./id_rsa
+  ```
 - Gather any CA Certs you may need for your network 
   - place in ../cacerts/corp.crt relative to working directory
 
