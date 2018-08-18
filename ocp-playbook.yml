@@ -19,20 +19,23 @@
         - { name: master, ip: 192.168.56.202 }
         - { name: node-a, ip: 192.168.56.203 }
         - { name: node-b, ip: 192.168.56.204 }
-    - name: Enabling Updates to CA Certs
-      shell: update-ca-trust enable
-    - name: add CA certificate
-      copy:
-        src: "{{ item.src }}"
-        dest: "{{ item.dest }}"
-        mode: "{{item.mode}}"
-        owner: root
-        group: root
-      with_items:
-        - { src: '../cacerts/corp.crt',dest: '/etc/pki/ca-trust/source/anchors/corp.crt', mode: '0644'}
-        - { src: '../cacerts/corp.crt',dest: '/etc/pki/tls/certs/corp.crt', mode: '0644'}
-    - name: Applying CA Certs
-      shell: update-ca-trust extract
+    - name: enable epel-release repo
+      shell: rpm-ostree pkg-add epel-release
+    - name: restart server
+      shell: sleep 2 && systemctl reboot
+      async: 1
+      poll: 0
+      become: yes
+      become_method: sudo
+      ignore_errors: true
+    - name: Pause for the cause
+      pause: seconds=20
+    - name: waiting for server to come back after reboot
+      wait_for_connection:
+    - name: uptime report
+      command: uptime
+      register: uptime
+    - debug: var=uptime.stdout_lines
     - name: Install helper packages
       shell: atomic host install wget git net-tools bind-utils iptables-services bridge-utils bash-completion kexec-tools sos ansible pyOpenSSL
       ignore_errors: true
