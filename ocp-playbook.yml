@@ -19,6 +19,8 @@
         - { name: master, ip: 192.168.56.202 }
         - { name: node-a, ip: 192.168.56.203 }
         - { name: node-b, ip: 192.168.56.204 }
+    - name: lvresize so you can actually install
+      shell: lvresize --size=+3g --resizefs atomicos/root
     - name: enable epel-release repo
       shell: rpm-ostree pkg-add epel-release
     - name: restart server
